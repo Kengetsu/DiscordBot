@@ -42,7 +42,7 @@ namespace Yuri_san
             });
         }
 
-        private void Log(object sender, LogMessageEventArgs e)
+        public void Log(object sender, LogMessageEventArgs e)
         {
             Console.WriteLine($"[{e.Severity}] {e.Source}: {e.Message}");
         }

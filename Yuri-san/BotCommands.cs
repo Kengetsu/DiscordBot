@@ -12,10 +12,10 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Google.Apis.Customsearch;
 using Google.Apis.Customsearch.v1;
 using Google.Apis.Customsearch.v1.Data;
 using Google.Apis.Services;
+using HtmlAgilityPack;
 
 namespace Yuri_san
 {
@@ -32,7 +32,7 @@ namespace Yuri_san
                     .Description("Posts a loli")
                     .Do((async e =>
                     {
-                        await e.Channel.SendMessage(ImageSearch("loli"));  
+                        await e.Channel.SendMessage(ImageSearch("loli"));                       
                     }));
                 cmd.CreateCommand("lolihug")
                     .Description("Loli hugging")
@@ -46,7 +46,7 @@ namespace Yuri_san
                     .Parameter("subject", ParameterType.Unparsed)
                     .Do((async e =>
                     {
-                        await e.Channel.SendMessage(ImageSearch(e.GetArg("subject")));
+                        await e.Channel.SendMessage(CustomSearch(e.GetArg("subject")));
                     }));
             });
         }
@@ -54,24 +54,33 @@ namespace Yuri_san
         ///public void ImageSearch(string subject, string fileName)
         public string ImageSearch(string subject)
         {
+            var webget = new HtmlWeb();
+            var source = webget.Load("http://safebooru.org/index.php?page=post&s=list&tags=loli");
+            var randomIndex = new Random();
+            List<string> imgArrays = new List<string>();
+            HtmlNode[] nodes = source.DocumentNode.SelectNodes("//img").ToArray();
+            foreach (var node in nodes)
+            {
+               imgArrays.Add(node.Attributes["src"].Value);
+            }
+            return imgArrays[randomIndex.Next(imgArrays.Count)];
+        }
+
+        public string CustomSearch(string subject)
+        {
             const string apiKey = "AIzaSyCIVBqRBZQcH4 - yqkyshzhJC37v4CfJgtE";
             const string searchEngineId = "009204377345296057423:2iq7quuu3xq";
             string query = subject;
+            var searchIndex = new Random();
 
-            var customsearchService = new CustomsearchService(new BaseClientService.Initializer() {ApiKey = apiKey});
+            var customsearchService = new CustomsearchService(new BaseClientService.Initializer() { ApiKey = apiKey });
             var listRequest = customsearchService.Cse.List(query);
 
             listRequest.Cx = searchEngineId;
             listRequest.SearchType = CseResource.ListRequest.SearchTypeEnum.Image;
             Search search = listRequest.Execute();
-            Random searchIndex = new Random();
-            /* Using file uploading system
-            using (WebClient webClient = new WebClient())
-            {
-                webClient.DownloadFile(new Uri(search.Items[searchIndex.Next(search.Items.Count)].Link),
-                    @".\img\" + fileName);
-            }
-            */
+            
+
             foreach (var item in search.Items)
             {
                 Console.WriteLine(item.Title);
