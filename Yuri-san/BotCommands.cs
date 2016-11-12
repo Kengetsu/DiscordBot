@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Runtime.Remoting.Messaging;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -21,31 +22,37 @@ namespace Yuri_san
     class BotCommands : CommandService
     {
         public CommandService Commands { get; set; }
+
         public BotCommands()
         {
-            Commands = BotClient.Client.GetService<CommandService>();
+            Commands = Program.Client.GetService<CommandService>();
             Commands.CreateGroup("", cmd =>
             {
                 cmd.CreateCommand("loli")
                     .Description("Posts a loli")
                     .Do((async e =>
                     {
-                        ImageSearch("loli", "tmp.png");
-                        await e.Channel.SendFile(@".\img\tmp.png");
-
+                        await e.Channel.SendMessage(ImageSearch("loli"));  
                     }));
                 cmd.CreateCommand("lolihug")
                     .Description("Loli hugging")
                     .Do((async e =>
                     {
-                        ImageSearch("loli hug", "tmp1.png");
-                        await e.Channel.SendFile(@".\img\tmp1.png");
+                        await e.Channel.SendMessage(ImageSearch("loli hugging"));
 
+                    }));
+                cmd.CreateCommand("search")
+                    .Description("Custom image search")
+                    .Parameter("subject", ParameterType.Unparsed)
+                    .Do((async e =>
+                    {
+                        await e.Channel.SendMessage(ImageSearch(e.GetArg("subject")));
                     }));
             });
         }
 
-        public void ImageSearch(string subject, string fileName)
+        ///public void ImageSearch(string subject, string fileName)
+        public string ImageSearch(string subject)
         {
             const string apiKey = "AIzaSyCIVBqRBZQcH4 - yqkyshzhJC37v4CfJgtE";
             const string searchEngineId = "009204377345296057423:2iq7quuu3xq";
@@ -58,11 +65,18 @@ namespace Yuri_san
             listRequest.SearchType = CseResource.ListRequest.SearchTypeEnum.Image;
             Search search = listRequest.Execute();
             Random searchIndex = new Random();
+            /* Using file uploading system
             using (WebClient webClient = new WebClient())
             {
                 webClient.DownloadFile(new Uri(search.Items[searchIndex.Next(search.Items.Count)].Link),
                     @".\img\" + fileName);
             }
+            */
+            foreach (var item in search.Items)
+            {
+                Console.WriteLine(item.Title);
+            }
+            return search.Items[searchIndex.Next(search.Items.Count)].Link.Equals(null) ? "No images found. Sorry." : search.Items[searchIndex.Next(search.Items.Count)].Link;
         }
     }
 }
